@@ -1,0 +1,215 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "dependsOn": [
+            "network-vnet"
+        ],
+        "resourceGroup": "rgClassicBastion",
+        "parameters": {
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            },
+            "subnetId": {
+                "value": "[artifacts('network-vnet').outputs.subnetIdClassicBastion]"
+            },
+            "nsgId": {
+                "value": "[parameters('nsgIdClassicBastion')]"
+            },
+            "privateIPAddress": {
+                "value": "10.249.112.36"
+            },
+            "vmSize": {
+                "value": "Standard_B2s"
+            },
+            "hostName": {
+                "value": "WWVCDSHBAST"
+            },
+            "adminUsername": {
+                "value": "cloudgov"
+            },
+            "adminPublicKey": {
+                "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDFvInqmNkUHMzZJgCG+0lrXlkhaZlRzd6vWW7PVrlZwJ+/YvK78VhaJVHRv3wvUbA1bjyfq+VJe4OIgNHIwSxGHr5yc3undxsJAXfv7w/UIz4Lz70Ue9zfQLR8fr1CvS0gQpkWxzrEdtdgonLAUMI6GyGXUYhLBPAmd1P9UUT+61tSY9EeUjkxFf31lkzhqyhOIfmmzRWShB4Glh81se6QFtySHKBgMgVXAIcWIlG7LtMGbYrmIiAz8LvKF8aY1Oo5D80DgzSvlsqcHKtPX7500Ro4MKsN8clODLWwh0G88e19K4nb1IDdcEse0EAEsw2toC3exe2DGI34yr1U6xQL kangjacq@ls@FRPFAWLT8523"
+            },
+            "logWorkspaceId": {
+                "value": "[parameters('logWorkspaceId')]"
+            },
+            "logWorkspaceKey": {
+                "value": "[parameters('logWorkspaceKey')]"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "resourceTags": {
+                    "type": "object"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "nsgId": {
+                    "type": "string"
+                },
+                "privateIPAddress": {
+                    "type": "string"
+                },
+                "vmSize": {
+                    "type": "string"
+                },
+                "hostName": {
+                    "type": "string"
+                },
+                "adminUsername": {
+                    "type": "string"
+                },
+                "adminPublicKey": {
+                    "type": "string"
+                },
+                "logWorkspaceId": {
+                    "type": "string"
+                },
+                "logWorkspaceKey": {
+                    "type": "securestring"
+                }
+            },
+            "variables": {
+                "component": "dsf-classic-bastion",
+                "pipName": "[concat('pip-', variables('component'))]",
+                "nicName": "[concat('nic-', variables('component'))]",
+                "vmName": "[concat('vm-', variables('component'))]",
+                "osDiskName": "[concat('osdisk-', variables('component'))]",
+                "resourceTags": "[parameters('resourceTags')]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Network/publicIpAddresses",
+                    "apiVersion": "2020-05-01",
+                    "name": "[variables('pipName')]",
+                    "location": "[resourceGroup().location]",
+                    "sku": {
+                        "name": "Standard"
+                    },
+                    "properties": {
+                        "publicIPAllocationMethod": "Static",
+                        "dnsSettings": {
+                            "domainNameLabel": "[variables('component')]"
+                        }
+                    },
+                    "tags": "[parameters('resourceTags')]"
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces",
+                    "apiVersion": "2020-05-01",
+                    "name": "[variables('nicName')]",
+                    "dependsOn": [
+                        "[variables('pipName')]"
+                    ],
+                    "location": "[resourceGroup().location]",
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "ipconfig-dsf",
+                                "properties": {
+                                    "privateIPAddress": "[parameters('privateIPAddress')]",
+                                    "privateIPAllocationMethod": "Static",
+                                    "publicIPAddress": {
+                                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
+                                    },
+                                    "subnet": {
+                                        "id": "[parameters('subnetId')]"
+                                    }
+                                }
+                            }
+                        ],
+                        "networkSecurityGroup": {
+                            "id": "[parameters('nsgId')]"
+                        }
+                    },
+                    "tags": "[parameters('resourceTags')]"
+                },
+                {
+                    "type": "Microsoft.Compute/virtualMachines",
+                    "apiVersion": "2020-06-01",
+                    "name": "[variables('vmName')]",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[variables('nicName')]"
+                    ],
+                    "properties": {
+                        "hardwareProfile": {
+                            "vmSize": "[parameters('vmSize')]"
+                        },
+                        "osProfile": {
+                            "computerName": "[parameters('hostName')]",
+                            "adminUsername": "[parameters('adminUsername')]",
+                            "linuxConfiguration": {
+                                "disablePasswordAuthentication": true,
+                                "ssh": {
+                                    "publicKeys": [
+                                        {
+                                            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                                            "keyData": "[parameters('adminPublicKey')]"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "storageProfile": {
+                            "imageReference": {
+                                "publisher": "Canonical",
+                                "offer": "UbuntuServer",
+                                "sku": "18.04-LTS",
+                                "version": "latest"
+                            },
+                            "osDisk": {
+                                "name": "[variables('osDiskName')]",
+                                "createOption": "fromImage",
+                                "diskSizeGB": 32,
+                                "managedDisk": {
+                                    "storageAccountType": "StandardSSD_LRS"
+                                }
+                            }
+                        },
+                        "networkProfile": {
+                            "networkInterfaces": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                                }
+                            ]
+                        },
+                        "diagnosticsProfile": {
+                            "bootDiagnostics": {
+                                "enabled": true
+                            }
+                        }
+                    },
+                    "tags": "[parameters('resourceTags')]",
+                    "resources": [
+                        {
+                            "type": "extensions",
+                            "apiVersion": "2018-06-01",
+                            "name": "OmsAgentForLinux",
+                            "location": "[resourceGroup().location]",
+                            "dependsOn": [
+                                "[variables('vmName')]"
+                            ],
+                            "properties": {
+                                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                                "type": "OmsAgentForLinux",
+                                "typeHandlerVersion": "1.0",
+                                "autoUpgradeMinorVersion": true,
+                                "settings": {
+                                    "workspaceId": "[parameters('logWorkspaceId')]"
+                                },
+                                "protectedSettings": {
+                                    "workspaceKey": "[parameters('logWorkspaceKey')]"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

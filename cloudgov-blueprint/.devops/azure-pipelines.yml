@@ -1,0 +1,33 @@
+name: $(Build.SourceBranchName)
+
+trigger:
+  branches:
+    include:
+      - refs/tags/*
+
+pool:
+  vmImage: windows-2019
+
+steps:
+  - task: CreateBlueprint@1
+    inputs:
+      azureSubscription: SPN-dsf-cloud-governance (Faurecia_DSF_Dev)
+      BlueprintName: bp-cloudgov
+      BlueprintPath: ./bp-cloudgov
+      AlternateLocation: false
+      PublishBlueprint: true
+      IncludeSubFolders: true
+      Version: $(Build.SourceBranchName)
+    displayName: Create and publish blueprint
+
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: ./bp-cloudgov
+      Contents: |
+        assign.json
+      TargetFolder: $(Build.ArtifactStagingDirectory)
+    displayName: Copy assignment file to staging folder
+
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: drop
+    displayName: Publish staging folder

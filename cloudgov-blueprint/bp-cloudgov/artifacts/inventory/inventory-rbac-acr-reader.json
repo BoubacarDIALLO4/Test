@@ -1,0 +1,15 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "roleAssignment",
+    "properties": {
+        "dependsOn": [
+            "inventory-id-acr-reader"
+        ],
+        "roleDefinitionId": "/subscriptions/47c1f798-c6b3-448a-81c8-6623a1f67e44/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d",
+        "principalIds": [
+            "[artifacts('inventory-id-acr-reader').outputs.principalId]"
+        ],
+        "displayName": "Assign AcrPull role",
+        "resourceGroup": "rgInventory"
+    }
+}

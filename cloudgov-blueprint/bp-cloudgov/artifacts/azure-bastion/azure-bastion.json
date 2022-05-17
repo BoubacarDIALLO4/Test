@@ -1,0 +1,82 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "dependsOn": [
+            "network-vnet"
+        ],
+        "resourceGroup": "rgAzureBastion",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            },
+            "subnetId": {
+                "value": "[artifacts('network-vnet').outputs.subnetIdAzureBastion]"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                },
+                "subnetId": {
+                    "type": "string"
+                }
+            },
+            "variables": {
+                "componentName": "[concat(parameters('stackName'), '-azure-bastion')]",
+                "pipName": "[concat('pip-', variables('componentName'))]",
+                "bastionName": "[concat('bst-', variables('componentName'))]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Network/publicIpAddresses",
+                    "apiVersion": "2020-05-01",
+                    "name": "[variables('pipName')]",
+                    "location": "[resourceGroup().location]",
+                    "sku": {
+                        "name": "Standard"
+                    },
+                    "properties": {
+                        "publicIPAllocationMethod": "Static"
+                    },
+                    "tags": "[parameters('resourceTags')]"
+                },
+                {
+                    "type": "Microsoft.Network/bastionHosts",
+                    "apiVersion": "2020-05-01",
+                    "name": "[variables('bastionName')]",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[variables('pipName')]"
+                    ],
+                    "properties": {
+                        "ipConfigurations": [
+                            {
+                                "name": "default",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "publicIPAddress": {
+                                        "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('pipName'))]"
+                                    },
+                                    "subnet": {
+                                        "id": "[parameters('subnetId')]"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "tags": "[parameters('resourceTags')]"
+                }
+            ]
+        }
+    }
+}

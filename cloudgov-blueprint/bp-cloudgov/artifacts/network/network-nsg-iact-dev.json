@@ -1,0 +1,146 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "dependsOn": [
+            "network-nsg-azure-bastion",
+            "network-nsg-classic-bastion"
+        ],
+        "resourceGroup": "rgNetwork",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            },
+            "cidr": {
+                "value": "10.249.114.0/27"
+            },
+            "cidrAzureBastion": {
+                "value": "[artifacts('network-nsg-azure-bastion').outputs.cidr]"
+            },
+            "cidrClassicBastion": {
+                "value": "[artifacts('network-nsg-classic-bastion').outputs.cidr]"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                },
+                "cidr": {
+                    "type": "string"
+                },
+                "cidrAzureBastion": {
+                    "type": "string"
+                },
+                "cidrClassicBastion": {
+                    "type": "string"
+                }
+            },
+            "variables": {
+                "nsgName": "[concat('nsg-', parameters('stackName'), '-network-iact-dev')]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Network/networkSecurityGroups",
+                    "apiVersion": "2020-05-01",
+                    "name": "[variables('nsgName')]",
+                    "location": "[resourceGroup().location]",
+                    "tags": "[parameters('resourceTags')]",
+                    "properties": {
+                        "securityRules": [
+                            {
+                                "name": "AllowAzureBastionInBound",
+                                "properties": {
+                                    "protocol": "TCP",
+                                    "sourcePortRange": "*",
+                                    "sourceAddressPrefix": "[parameters('cidrAzureBastion')]",
+                                    "destinationAddressPrefix": "*",
+                                    "access": "Allow",
+                                    "priority": 1000,
+                                    "direction": "Inbound",
+                                    "destinationPortRanges": [
+                                        "22",
+                                        "3389"
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "AllowClassicBastionInBound",
+                                "properties": {
+                                    "protocol": "TCP",
+                                    "sourcePortRange": "*",
+                                    "sourceAddressPrefix": "[parameters('cidrClassicBastion')]",
+                                    "destinationAddressPrefix": "*",
+                                    "access": "Allow",
+                                    "priority": 1001,
+                                    "direction": "Inbound",
+                                    "destinationPortRanges": [
+                                        "22",
+                                        "3389"
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "AllowIntraSubnetInBound",
+                                "properties": {
+                                    "protocol": "*",
+                                    "sourcePortRange": "*",
+                                    "destinationPortRange": "*",
+                                    "sourceAddressPrefix": "[parameters('cidr')]",
+                                    "destinationAddressPrefix": "*",
+                                    "access": "Allow",
+                                    "priority": 4000,
+                                    "direction": "Inbound"
+                                }
+                            },
+                            {
+                                "name": "AllowAzureLoadBalancerInBound",
+                                "properties": {
+                                    "protocol": "*",
+                                    "sourcePortRange": "*",
+                                    "destinationPortRange": "*",
+                                    "sourceAddressPrefix": "AzureLoadBalancer",
+                                    "destinationAddressPrefix": "*",
+                                    "access": "Allow",
+                                    "priority": 4095,
+                                    "direction": "Inbound"
+                                }
+                            },
+                            {
+                                "name": "DenyVnetInBound",
+                                "properties": {
+                                    "protocol": "*",
+                                    "sourcePortRange": "*",
+                                    "destinationPortRange": "*",
+                                    "sourceAddressPrefix": "VirtualNetwork",
+                                    "destinationAddressPrefix": "VirtualNetwork",
+                                    "access": "Deny",
+                                    "priority": 4096,
+                                    "direction": "Inbound"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ],
+            "outputs": {
+                "nsgId": {
+                    "type": "string",
+                    "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                },
+                "cidr": {
+                    "type": "string",
+                    "value": "[parameters('cidr')]"
+                }
+            }
+        }
+    }
+}

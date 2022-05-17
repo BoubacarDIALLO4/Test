@@ -1,0 +1,194 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "dependsOn": [
+            "network-nsg-azure-bastion",
+            "network-nsg-classic-bastion",
+            "network-nsg-ci",
+            "network-nsg-iact-dev",
+            "network-nsg-yield-dev"
+        ],
+        "resourceGroup": "rgNetwork",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            },
+            "cidrVNet": {
+                "value": "10.249.112.0/21"
+            },
+            "nsgIdAzureBastion": {
+                "value": "[artifacts('network-nsg-azure-bastion').outputs.nsgId]"
+            },
+            "cidrSubnetAzureBastion": {
+                "value": "[artifacts('network-nsg-azure-bastion').outputs.cidr]"
+            },
+            "nsgIdClassicBastion": {
+                "value": "[artifacts('network-nsg-classic-bastion').outputs.nsgId]"
+            },
+            "cidrSubnetClassicBastion": {
+                "value": "[artifacts('network-nsg-classic-bastion').outputs.cidr]"
+            },
+            "nsgIdCI": {
+                "value": "[artifacts('network-nsg-ci').outputs.nsgId]"
+            },
+            "cidrSubnetCI": {
+                "value": "[artifacts('network-nsg-ci').outputs.cidr]"
+            },
+            "nsgIdIactDev": {
+                "value": "[artifacts('network-nsg-iact-dev').outputs.nsgId]"
+            },
+            "cidrSubnetIactDev": {
+                "value": "[artifacts('network-nsg-iact-dev').outputs.cidr]"
+            },
+            "nsgIdYieldDev": {
+                "value": "[artifacts('network-nsg-yield-dev').outputs.nsgId]"
+            },
+            "cidrSubnetYieldDev": {
+                "value": "[artifacts('network-nsg-yield-dev').outputs.cidr]"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                },
+                "cidrVNet": {
+                    "type": "string"
+                },
+                "nsgIdAzureBastion": {
+                    "type": "string"
+                },
+                "cidrSubnetAzureBastion": {
+                    "type": "string"
+                },
+                "nsgIdClassicBastion": {
+                    "type": "string"
+                },
+                "cidrSubnetClassicBastion": {
+                    "type": "string"
+                },
+                "nsgIdCI": {
+                    "type": "string"
+                },
+                "cidrSubnetCI": {
+                    "type": "string"
+                },
+                "nsgIdIactDev": {
+                    "type": "string"
+                },
+                "cidrSubnetIactDev": {
+                    "type": "string"
+                },
+                "nsgIdYieldDev": {
+                    "type": "string"
+                },
+                "cidrSubnetYieldDev": {
+                    "type": "string"
+                }
+            },
+            "variables": {
+                "componentName": "[concat(parameters('stackName'), '-network')]",
+                "vnetName": "[concat('vnet-', variables('componentName'))]",
+                "subnetNameAzureBastion": "AzureBastionSubnet",
+                "subnetNameClassicBastion": "ClassicBastionSubnet",
+                "subnetNameCI": "snet-dsf-ci",
+                "subnetNameIactDev": "snet-iact-dev",
+                "subnetNameYieldDev": "snet-yield-dev"
+            },
+            "resources": [
+                {
+                    "name": "[variables('vnetName')]",
+                    "type": "Microsoft.Network/virtualNetworks",
+                    "apiVersion": "2020-07-01",
+                    "location": "[resourceGroup().location]",
+                    "properties": {
+                        "addressSpace": {
+                            "addressPrefixes": [
+                                "[parameters('cidrVNet')]"
+                            ]
+                        },
+                        "subnets": [
+                            {
+                                "name": "[variables('subnetNameAzureBastion')]",
+                                "properties": {
+                                    "addressPrefix": "[parameters('cidrSubnetAzureBastion')]",
+                                    "networkSecurityGroup": {
+                                        "id": "[parameters('nsgIdAzureBastion')]"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "[variables('subnetNameClassicBastion')]",
+                                "properties": {
+                                    "addressPrefix": "[parameters('cidrSubnetClassicBastion')]",
+                                    "networkSecurityGroup": {
+                                        "id": "[parameters('nsgIdClassicBastion')]"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "[variables('subnetNameCI')]",
+                                "properties": {
+                                    "addressPrefix": "[parameters('cidrSubnetCI')]",
+                                    "networkSecurityGroup": {
+                                        "id": "[parameters('nsgIdCI')]"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "[variables('subnetNameIactDev')]",
+                                "properties": {
+                                    "addressPrefix": "[parameters('cidrSubnetIactDev')]",
+                                    "networkSecurityGroup": {
+                                        "id": "[parameters('nsgIdIactDev')]"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "[variables('subnetNameYieldDev')]",
+                                "properties": {
+                                    "addressPrefix": "[parameters('cidrSubnetYieldDev')]",
+                                    "networkSecurityGroup": {
+                                        "id": "[parameters('nsgIdYieldDev')]"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "tags": "[parameters('resourceTags')]"
+                }
+            ],
+            "outputs": {
+                "subnetIdAzureBastion": {
+                    "type": "string",
+                    "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetNameAzureBastion'))]"
+                },
+                "subnetIdClassicBastion": {
+                    "type": "string",
+                    "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetNameClassicBastion'))]"
+                },
+                "subnetIdCI": {
+                    "type": "string",
+                    "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetNameCI'))]"
+                },
+                "subnetIdIactDev": {
+                    "type": "string",
+                    "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetNameIactDev'))]"
+                },
+                "subnetIdYieldDev": {
+                    "type": "string",
+                    "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetNameYieldDev'))]"
+                }
+            }
+        }
+    }
+}

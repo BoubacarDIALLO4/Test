@@ -1,0 +1,48 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "resourceGroup": "rgRecovery",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                }
+            },
+            "variables": {
+                "componentName": "[concat(parameters('stackName'), '-recovery')]",
+                "rsvName": "[concat('rsv-', variables('componentName'))]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.RecoveryServices/vaults",
+                    "apiVersion": "2020-02-02",
+                    "name": "[variables('rsvName')]",
+                    "location": "[resourceGroup().location]",
+                    "tags": "[parameters('resourceTags')]",
+                    "sku": {
+                        "name": "RS0",
+                        "tier": "Standard"
+                    },
+                    "identity": {
+                        "type": "SystemAssigned"
+                    },
+                    "properties": {}
+                }
+            ]
+        }
+    }
+}

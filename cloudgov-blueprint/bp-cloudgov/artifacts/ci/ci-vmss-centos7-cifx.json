@@ -1,0 +1,161 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "dependsOn": [
+            "network-vnet"
+        ],
+        "resourceGroup": "rgCI",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            },
+            "subnetId": {
+                "value": "[artifacts('network-vnet').outputs.subnetIdCI]"
+            },
+            "imageId": {
+                "value": "/subscriptions/47c1f798-c6b3-448a-81c8-6623a1f67e44/resourceGroups/rg-inf-dsf-inventory/providers/Microsoft.Compute/galleries/sigdsfinventory/images/ci-centos-cifx"
+            },
+            "vmSize": {
+                "value": "Standard_B4ms"
+            },
+            "hostNamePrefix": {
+                "value": "WWVCDSHCICC"
+            },
+            "adminUsername": {
+                "value": "cloudgov"
+            },
+            "adminPublicKey": {
+                "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDmqKWt3+DbZQYc/ETckEGlDz4L/JvYqYwqUIox/gYyj8wUMdxygYZgTKhgIkEM8IOMEeEZt5MCPhVfnUzGiVNwDulf/sMloIDJVaaVNwW3stFByA5jshk9simq1p6LFcHkHBBcds3m5VtZyVwnpku2zePa/FHg/Oomm+sdojwn3gVLMy4TtY8CF63NHk3Mc+XVDOP//TJ17OH7p3kGdcULuCAC27C4hj6fjmWnj5jofId3cnlZ3D1uZ92g7OTr8W/q/3TIFb3URXd4/wX/gdHxwvcKC7sYPsSiz6QRqnsX/3WMuyjXbebKrnhx4ZASAL8oo6CjU3uiTeXTdA0MGIZZ diallob@FRPFAWLT8000"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "vmSize": {
+                    "type": "string"
+                },
+                "hostNamePrefix": {
+                    "type": "string"
+                },
+                "adminUsername": {
+                    "type": "string"
+                },
+                "adminPublicKey": {
+                    "type": "string"
+                }
+            },
+            "variables": {
+                "componentName": "[concat(parameters('stackName'), '-ci-centos7-cifx-driver')]",
+                "vmssName": "[concat('vmss-', variables('componentName'))]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Compute/virtualMachineScaleSets",
+                    "apiVersion": "2020-06-01",
+                    "name": "[variables('vmssName')]",
+                    "location": "[resourceGroup().location]",
+                    "tags": "[parameters('resourceTags')]",
+                    "sku": {
+                        "name": "[parameters('vmSize')]",
+                        "tier": "Standard",
+                        "capacity": 0
+                    },
+                    "plan": {
+                        "name": "centos-7",
+                        "publisher": "procomputers",
+                        "product": "centos-7"
+                    },
+                    "properties": {
+                        "singlePlacementGroup": false,
+                        "upgradePolicy": {
+                            "mode": "Manual",
+                            "automaticOSUpgradePolicy": {
+                                "enableAutomaticOSUpgrade": false,
+                                "disableAutomaticRollback": false
+                            }
+                        },
+                        "virtualMachineProfile": {
+                            "osProfile": {
+                                "computerNamePrefix": "[parameters('hostNamePrefix')]",
+                                "adminUsername": "[parameters('adminUsername')]",
+                                "linuxConfiguration": {
+                                    "disablePasswordAuthentication": true,
+                                    "ssh": {
+                                        "publicKeys": [
+                                            {
+                                                "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                                                "keyData": "[parameters('adminPublicKey')]"
+                                            }
+                                        ]
+                                    },
+                                    "provisionVMAgent": true
+                                }
+                            },
+                            "storageProfile": {
+                                "osDisk": {
+                                    "createOption": "FromImage",
+                                    "caching": "ReadWrite",
+                                    "managedDisk": {
+                                        "storageAccountType": "StandardSSD_LRS"
+                                    },
+                                    "diskSizeGB": 128
+                                },
+                                "imageReference": {
+                                    "id": "[parameters('imageId')]"
+                                }
+                            },
+                            "networkProfile": {
+                                "networkInterfaceConfigurations": [
+                                    {
+                                        "name": "default",
+                                        "properties": {
+                                            "primary": true,
+                                            "enableAcceleratedNetworking": false,
+                                            "enableIPForwarding": false,
+                                            "ipConfigurations": [
+                                                {
+                                                    "name": "default",
+                                                    "properties": {
+                                                        "primary": true,
+                                                        "subnet": {
+                                                            "id": "[parameters('subnetId')]"
+                                                        },
+                                                        "privateIPAddressVersion": "IPv4"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            },
+                            "diagnosticsProfile": {
+                                "bootDiagnostics": {
+                                    "enabled": true
+                                }
+                            }
+                        },
+                        "overprovision": false,
+                        "doNotRunExtensionsOnOverprovisionedVMs": false
+                    }
+                }
+            ]
+        }
+    }
+}

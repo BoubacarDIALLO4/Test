@@ -1,0 +1,108 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "dependsOn": [
+            "network-nsg-azure-bastion"
+        ],
+        "resourceGroup": "rgNetwork",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            },
+            "cidr": {
+                "value": "10.249.112.32/27"
+            },
+            "addressesFaurecia": {
+                "value": [
+                    "213.41.94.186"
+                ]
+            },
+            "cidrAzureBastion": {
+                "value": "[artifacts('network-nsg-azure-bastion').outputs.cidr]"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                },
+                "cidr": {
+                    "type": "string"
+                },
+                "addressesFaurecia": {
+                    "type": "array"
+                },
+                "cidrAzureBastion": {
+                    "type": "string"
+                }
+            },
+            "variables": {
+                "nsgName": "[concat('nsg-', parameters('stackName'), '-network-classic-bastion')]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Network/networkSecurityGroups",
+                    "apiVersion": "2020-05-01",
+                    "name": "[variables('nsgName')]",
+                    "location": "[resourceGroup().location]",
+                    "tags": "[parameters('resourceTags')]",
+                    "properties": {
+                        "securityRules": [
+                            {
+                                "name": "AllowFaureciaInbound",
+                                "properties": {
+                                    "protocol": "Tcp",
+                                    "sourcePortRange": "*",
+                                    "destinationPortRanges": [
+                                        "22",
+                                        "3389"
+                                    ],
+                                    "sourceAddressPrefixes": "[parameters('addressesFaurecia')]",
+                                    "destinationAddressPrefix": "*",
+                                    "access": "Allow",
+                                    "priority": 1000,
+                                    "direction": "Inbound"
+                                }
+                            },
+                            {
+                                "name": "AllowAzureBastionInBound",
+                                "properties": {
+                                    "protocol": "TCP",
+                                    "sourcePortRange": "*",
+                                    "sourceAddressPrefix": "[parameters('cidrAzureBastion')]",
+                                    "destinationAddressPrefix": "*",
+                                    "access": "Allow",
+                                    "priority": 1001,
+                                    "direction": "Inbound",
+                                    "destinationPortRanges": [
+                                        "22",
+                                        "3389"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ],
+            "outputs": {
+                "nsgId": {
+                    "type": "string",
+                    "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                },
+                "cidr": {
+                    "type": "string",
+                    "value": "[parameters('cidr')]"
+                }
+            }
+        }
+    }
+}

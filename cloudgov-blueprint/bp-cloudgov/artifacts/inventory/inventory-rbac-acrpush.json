@@ -1,0 +1,12 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "roleAssignment",
+    "properties": {
+        "roleDefinitionId": "/subscriptions/47c1f798-c6b3-448a-81c8-6623a1f67e44/providers/Microsoft.Authorization/roleDefinitions/8311e382-0749-4cb8-b61a-304f252e45ec",
+        "principalIds": [
+            "[parameters('aadGroupIdTeam')]"
+        ],
+        "displayName": "AcrPush assignment",
+        "resourceGroup": "rgInventory"
+    }
+}

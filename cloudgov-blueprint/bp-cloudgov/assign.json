@@ -1,0 +1,46 @@
+{
+  "identity": {
+    "type": "UserAssigned",
+    "tenantId": "5047bca2-da88-442e-a09a-d9b8af692adc",
+    "userAssignedIdentities": {
+      "/subscriptions/47c1f798-c6b3-448a-81c8-6623a1f67e44/resourceGroups/rg-inf-dsf-security/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-dsf-security-blueprint": {}
+    }
+  },
+  "location": "westeurope",
+  "properties": {
+    "blueprintId": "",
+    "resourceGroups": {},
+    "locks": {
+      "mode": "none"
+    },
+    "parameters": {
+      "stackName": {
+        "value": "dev"
+      },
+      "location": {
+        "value": "westeurope"
+      },
+      "resourceTags": {
+        "value": {
+          "owner": "HQ-dsf-cloudgov@faurecia.com",
+          "project": "cloudgov",
+          "env": "dev"
+        }
+      },
+      "nsgIdClassicBastion": {
+        "value": "/subscriptions/47c1f798-c6b3-448a-81c8-6623a1f67e44/resourceGroups/rg-inf-dsf-security/providers/Microsoft.Network/networkSecurityGroups/nsg-dsf-security-classic-bastion"
+      },
+      "aadGroupIdTeam": {
+        "value": "a6823704-4259-4b75-b90e-606a59b5bd37"
+      },
+      "logWorkspaceKey": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/47c1f798-c6b3-448a-81c8-6623a1f67e44/resourceGroups/rg-inf-dsf-security/providers/Microsoft.KeyVault/vaults/kv-dsf-security"
+          },
+          "secretName": "key-log-dsf-security"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "resourceGroup": "rgNetwork",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            },
+            "cidr": {
+                "value": "10.249.112.0/27"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                },
+                "cidr": {
+                    "type": "string"
+                }
+            },
+            "variables": {
+                "nsgName": "[concat('nsg-', parameters('stackName'), '-network-azure-bastion')]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Network/networkSecurityGroups",
+                    "apiVersion": "2020-05-01",
+                    "name": "[variables('nsgName')]",
+                    "location": "[resourceGroup().location]",
+                    "tags": "[parameters('resourceTags')]",
+                    "properties": {
+                        "securityRules": [
+                            {
+                                "name": "AllowAzureCloudOutbound",
+                                "properties": {
+                                    "description": "Ref https://docs.microsoft.com/en-us/azure/bastion/bastion-nsg",
+                                    "protocol": "Tcp",
+                                    "sourcePortRange": "*",
+                                    "destinationPortRange": "443",
+                                    "sourceAddressPrefix": "*",
+                                    "destinationAddressPrefix": "AzureCloud",
+                                    "access": "Allow",
+                                    "priority": 110,
+                                    "direction": "Outbound"
+                                }
+                            },
+                            {
+                                "name": "AllowGatewayManagerInbound",
+                                "properties": {
+                                    "description": "Ref https://docs.microsoft.com/en-us/azure/bastion/bastion-nsg",
+                                    "protocol": "Tcp",
+                                    "sourcePortRange": "*",
+                                    "destinationPortRange": "443",
+                                    "sourceAddressPrefix": "GatewayManager",
+                                    "destinationAddressPrefix": "*",
+                                    "access": "Allow",
+                                    "priority": 130,
+                                    "direction": "Inbound"
+                                }
+                            },
+                            {
+                                "name": "AllowVNetOutbound",
+                                "properties": {
+                                    "description": "Ref https://docs.microsoft.com/en-us/azure/bastion/bastion-nsg",
+                                    "protocol": "*",
+                                    "sourcePortRange": "*",
+                                    "sourceAddressPrefix": "*",
+                                    "destinationAddressPrefix": "VirtualNetwork",
+                                    "access": "Allow",
+                                    "priority": 100,
+                                    "direction": "Outbound",
+                                    "destinationPortRanges": [
+                                        "22",
+                                        "3389"
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "AllowInternetInbound",
+                                "properties": {
+                                    "description": "Ref: https://docs.microsoft.com/en-us/azure/bastion/bastion-nsg",
+                                    "protocol": "Tcp",
+                                    "sourcePortRange": "*",
+                                    "destinationPortRange": "443",
+                                    "sourceAddressPrefix": "Internet",
+                                    "destinationAddressPrefix": "*",
+                                    "access": "Allow",
+                                    "priority": 120,
+                                    "direction": "Inbound"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ],
+            "outputs": {
+                "nsgId": {
+                    "type": "string",
+                    "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                },
+                "cidr": {
+                    "type": "string",
+                    "value": "[parameters('cidr')]"
+                }
+            }
+        }
+    }
+}

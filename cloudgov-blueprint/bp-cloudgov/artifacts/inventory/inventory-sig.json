@@ -1,0 +1,42 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "resourceGroup": "rgInventory",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                }
+            },
+            "variables": {
+                "sigName": "[concat('sig', parameters('stackName'), 'inventory')]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Compute/galleries",
+                    "apiVersion": "2020-09-30",
+                    "name": "[variables('sigName')]",
+                    "location": "[resourceGroup().location]",
+                    "tags": "[parameters('resourceTags')]",
+                    "properties": {
+                        "identifier": {}
+                    }
+                }
+            ]
+        }
+    }
+}

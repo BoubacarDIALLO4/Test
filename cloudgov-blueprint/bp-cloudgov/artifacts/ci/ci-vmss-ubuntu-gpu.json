@@ -1,0 +1,174 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "dependsOn": [
+            "network-vnet"
+        ],
+        "resourceGroup": "rgCI",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            },
+            "subnetId": {
+                "value": "[artifacts('network-vnet').outputs.subnetIdCI]"
+            },
+            "imageId": {
+                "value": "/subscriptions/47c1f798-c6b3-448a-81c8-6623a1f67e44/resourceGroups/rg-inf-dsf-inventory/providers/Microsoft.Compute/galleries/sigdsfinventory/images/img-dsf-inventory-ci-centos-cpu"
+            },
+            "vmSize": {
+                "value": "Standard_NC6_Promo"
+            },
+            "hostNamePrefix": {
+                "value": "WWVCDSHCIUG"
+            },
+            "adminUsername": {
+                "value": "cloudgov"
+            },
+            "adminPublicKey": {
+                "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDFvInqmNkUHMzZJgCG+0lrXlkhaZlRzd6vWW7PVrlZwJ+/YvK78VhaJVHRv3wvUbA1bjyfq+VJe4OIgNHIwSxGHr5yc3undxsJAXfv7w/UIz4Lz70Ue9zfQLR8fr1CvS0gQpkWxzrEdtdgonLAUMI6GyGXUYhLBPAmd1P9UUT+61tSY9EeUjkxFf31lkzhqyhOIfmmzRWShB4Glh81se6QFtySHKBgMgVXAIcWIlG7LtMGbYrmIiAz8LvKF8aY1Oo5D80DgzSvlsqcHKtPX7500Ro4MKsN8clODLWwh0G88e19K4nb1IDdcEse0EAEsw2toC3exe2DGI34yr1U6xQL kangjacq@ls@FRPFAWLT8523"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "vmSize": {
+                    "type": "string"
+                },
+                "hostNamePrefix": {
+                    "type": "string"
+                },
+                "adminUsername": {
+                    "type": "string"
+                },
+                "adminPublicKey": {
+                    "type": "string"
+                }
+            },
+            "variables": {
+                "componentName": "[concat(parameters('stackName'), '-ci-ubuntu-gpu')]",
+                "vmssName": "[concat('vmss-', variables('componentName'))]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Compute/virtualMachineScaleSets",
+                    "apiVersion": "2020-12-01",
+                    "name": "[variables('vmssName')]",
+                    "location": "[resourceGroup().location]",
+                    "tags": "[parameters('resourceTags')]",
+                    "sku": {
+                        "name": "[parameters('vmSize')]",
+                        "tier": "Standard",
+                        "capacity": 0
+                    },
+                    "properties": {
+                        "singlePlacementGroup": false,
+                        "upgradePolicy": {
+                            "mode": "Manual",
+                            "automaticOSUpgradePolicy": {
+                                "enableAutomaticOSUpgrade": false,
+                                "disableAutomaticRollback": false
+                            }
+                        },
+                        "virtualMachineProfile": {
+                            "osProfile": {
+                                "computerNamePrefix": "[parameters('hostNamePrefix')]",
+                                "adminUsername": "[parameters('adminUsername')]",
+                                "linuxConfiguration": {
+                                    "disablePasswordAuthentication": true,
+                                    "ssh": {
+                                        "publicKeys": [
+                                            {
+                                                "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                                                "keyData": "[parameters('adminPublicKey')]"
+                                            }
+                                        ]
+                                    },
+                                    "provisionVMAgent": true
+                                }
+                            },
+                            "storageProfile": {
+                                "osDisk": {
+                                    "createOption": "FromImage",
+                                    "caching": "ReadWrite",
+                                    "managedDisk": {
+                                        "storageAccountType": "StandardSSD_LRS"
+                                    },
+                                    "diskSizeGB": 256
+                                },
+                                "imageReference": {
+                                    "publisher": "microsoft-dsvm",
+                                    "offer": "ubuntu-1804",
+                                    "sku": "1804",
+                                    "version": "latest"
+                                }
+                            },
+                            "networkProfile": {
+                                "networkInterfaceConfigurations": [
+                                    {
+                                        "name": "default",
+                                        "properties": {
+                                            "primary": true,
+                                            "enableAcceleratedNetworking": false,
+                                            "enableIPForwarding": false,
+                                            "ipConfigurations": [
+                                                {
+                                                    "name": "default",
+                                                    "properties": {
+                                                        "primary": true,
+                                                        "subnet": {
+                                                            "id": "[parameters('subnetId')]"
+                                                        },
+                                                        "privateIPAddressVersion": "IPv4"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            },
+                            "diagnosticsProfile": {
+                                "bootDiagnostics": {
+                                    "enabled": true
+                                }
+                            },
+                            "extensionProfile": {
+                                "extensions": [
+                                    {
+                                        "name": "customScript",
+                                        "properties": {
+                                            "publisher": "Microsoft.Azure.Extensions",
+                                            "settings": {
+                                                "script": "[base64('sudo systemctl start docker')]"
+                                            },
+                                            "typeHandlerVersion": "2.1",
+                                            "type": "CustomScript"
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "overprovision": false,
+                        "doNotRunExtensionsOnOverprovisionedVMs": false
+                    }
+                }
+            ]
+        }
+    }
+}

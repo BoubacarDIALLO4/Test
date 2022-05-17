@@ -1,0 +1,51 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "resourceGroup": "rgInventory",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                }
+            },
+            "variables": {
+                "acrName": "[concat('acr', parameters('stackName'), 'inventory')]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.ContainerRegistry/registries",
+                    "apiVersion": "2019-12-01-preview",
+                    "name": "[variables('acrName')]",
+                    "location": "[resourceGroup().location]",
+                    "tags": "[parameters('resourceTags')]",
+                    "sku": {
+                        "name": "Premium"
+                    },
+                    "properties": {
+                        "adminUserEnabled": true,
+                        "policies": {
+                            "retentionPolicy": {
+                                "days": 7,
+                                "status": "enabled"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

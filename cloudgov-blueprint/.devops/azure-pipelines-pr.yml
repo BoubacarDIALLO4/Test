@@ -1,0 +1,18 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger: none
+
+pool:
+  vmImage: windows-2019
+
+steps:
+  - task: CreateBlueprint@1
+    inputs:
+      azureSubscription: SPN-dsf-cloud-governance (Faurecia_DSF_Dev)
+      BlueprintName: bp-cloudgov-pr
+      BlueprintPath: ./bp-cloudgov
+      AlternateLocation: false
+      PublishBlueprint: true
+      IncludeSubFolders: true
+      Version: $(Build.BuildNumber)
+    displayName: Create and publish blueprint

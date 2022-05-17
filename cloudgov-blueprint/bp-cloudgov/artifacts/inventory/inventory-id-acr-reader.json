@@ -1,0 +1,46 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "template",
+    "properties": {
+        "resourceGroup": "rgInventory",
+        "parameters": {
+            "stackName": {
+                "value": "[parameters('stackName')]"
+            },
+            "resourceTags": {
+                "value": "[parameters('resourceTags')]"
+            }
+        },
+        "template": {
+            "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "stackName": {
+                    "type": "string"
+                },
+                "resourceTags": {
+                    "type": "object"
+                }
+            },
+            "variables": {
+                "componentName": "[concat(parameters('stackName'), '-inventory')]",
+                "identityName": "[concat('id-', variables('componentName'), '-acr-reader')]"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+                    "name": "[variables('identityName')]",
+                    "apiVersion": "2018-11-30",
+                    "location": "[resourceGroup().location]",
+                    "tags": "[parameters('resourceTags')]"
+                }
+            ],
+            "outputs": {
+                "principalId": {
+                    "type": "string",
+                    "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('identityName')), '2018-11-30').principalId]"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "roleAssignment",
+    "properties": {
+        "dependsOn": [
+            "inventory-id-imange-builder"
+        ],
+        "roleDefinitionId": "/subscriptions/47c1f798-c6b3-448a-81c8-6623a1f67e44/providers/Microsoft.Authorization/roleDefinitions/877cab8d-09c3-48af-9008-ec2c5ffba437",
+        "principalIds": [
+            "[artifacts('inventory-id-imange-builder').outputs.principalId]"
+        ],
+        "displayName": "Assign AIB Image Creator role",
+        "resourceGroup": "rgInventory"
+    }
+}

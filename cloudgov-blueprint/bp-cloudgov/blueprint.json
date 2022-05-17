@@ -1,0 +1,91 @@
+{
+    "type": "Microsoft.Blueprint/blueprints",
+    "properties": {
+        "description": "Blueprint for Faurecia DSF development environment",
+        "targetScope": "subscription",
+        "parameters": {
+            "stackName": {
+                "type": "string",
+                "defaultValue": "dsf"
+            },
+            "location": {
+                "type": "string",
+                "defaultValue": "westeurope"
+            },
+            "resourceTags": {
+                "type": "object",
+                "defaultValue": {
+                    "owner": "HQ-dsf-cloudgov@faurecia.com",
+                    "project": "cloudgov",
+                    "env": "dev"
+                }
+            },
+            "nsgIdClassicBastion": {
+                "type": "string",
+                "defaultValue": "/subscriptions/47c1f798-c6b3-448a-81c8-6623a1f67e44/resourceGroups/rg-inf-dsf-classic-bastion/providers/Microsoft.Network/networkSecurityGroups/nsg-dsf-classic-bastion"
+            },
+            "aadGroupIdTeam": {
+                "type": "string",
+                "defaultValue": "a6823704-4259-4b75-b90e-606a59b5bd37"
+            },
+            "logWorkspaceId": {
+                "type": "string",
+                "defaultValue": "939ae85a-ec29-44b9-8d5f-d48da5cae20b"
+            },
+            "logWorkspaceKey": {
+                "type": "securestring"
+            }
+        },
+        "resourceGroups": {
+            "rgNetwork": {
+                "name": "[concat('rg-inf-', parameters('stackName'), '-network')]",
+                "location": "[parameters('location')]",
+                "tags": {
+                    "blueprint": "bp-cloudgov"
+                }
+            },
+            "rgAzureBastion": {
+                "name": "[concat('rg-inf-', parameters('stackName'), '-azure-bastion')]",
+                "location": "[parameters('location')]",
+                "tags": {
+                    "blueprint": "bp-cloudgov"
+                }
+            },
+            "rgClassicBastion": {
+                "name": "[concat('rg-inf-', parameters('stackName'), '-classic-bastion')]",
+                "location": "[parameters('location')]",
+                "tags": {
+                    "blueprint": "bp-cloudgov"
+                }
+            },
+            "rgCI": {
+                "name": "[concat('rg-inf-', parameters('stackName'), '-ci')]",
+                "location": "[parameters('location')]",
+                "tags": {
+                    "blueprint": "bp-cloudgov"
+                }
+            },
+            "rgRecovery": {
+                "name": "[concat('rg-inf-', parameters('stackName'), '-recovery')]",
+                "location": "[parameters('location')]",
+                "tags": {
+                    "blueprint": "bp-cloudgov"
+                }
+            },
+            "rgInventory": {
+                "name": "[concat('rg-inf-', parameters('stackName'), '-inventory')]",
+                "location": "[parameters('location')]",
+                "tags": {
+                    "blueprint": "bp-cloudgov"
+                }
+            },
+            "rgDelivery": {
+                "name": "[concat('rg-inf-', parameters('stackName'), '-delivery')]",
+                "location": "[parameters('location')]",
+                "tags": {
+                    "blueprint": "bp-cloudgov"
+                }
+            }
+        }
+    }
+}

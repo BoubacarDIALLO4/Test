@@ -1,0 +1,12 @@
+{
+    "type": "Microsoft.Blueprint/blueprints/artifacts",
+    "kind": "roleAssignment",
+    "properties": {
+        "roleDefinitionId": "/subscriptions/9b60209c-e5cf-46c2-afb0-7c8c7a966a42/providers/Microsoft.Authorization/roleDefinitions/792373da-c753-477c-8a5c-fb66a6800b51",
+        "principalIds": [
+            "[parameters('aadGroupIdTeam')]"
+        ],
+        "displayName": "JIT Access Role assignment",
+        "resourceGroup": "rgClassicBastion"
+    }
+}
