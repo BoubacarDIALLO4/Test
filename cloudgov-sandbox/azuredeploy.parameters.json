@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "stackName": {
+            "value": "kangjacq-001"
+        },
+        "owner": {
+            "value": "jacques.kang@faurecia.com"
+        },
+        "location": {
+            "value": "westeurope"
+        },
+        "budgetAmount": {
+            "value": 50
+        },
+        "budgetStartDate": {
+            "value": "2021-04-01"
+        },
+        "principalId": {
+            "value": "f3e81b61-ea79-444a-8426-781719488972"
+        }
+    }
+}

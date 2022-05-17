@@ -1,0 +1,120 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "stackName": {
+            "type": "string"
+        },
+        "principalId": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "budgetAmount": {
+            "type": "int",
+            "metadata": {
+                "description": "The total amount of cost or usage to track with the budget"
+            }
+        },
+        "budgetStartDate": {
+            "type": "string",
+            "metadata": {
+                "description": "The start date must be first of the month in YYYY-MM-DD format. Future start date should not be more than three months. Past start date should be selected within the timegrain preiod."
+            }
+        },
+        "owner": {
+            "type": "string",
+            "defaultValue": "jacques.kang@faurecia.com",
+            "metadata": {
+                "description": "Resource ower's emailaddress"
+            }
+        }
+    },
+    "variables": {
+        "rgName": "[concat('rg-sbx-', parameters('stackName'))]",
+        "budgetName": "[concat('budget-dsf-sbx-', parameters('stackName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('rgName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "owner": "[parameters('owner')]",
+                "project": "innov",
+                "product": "innov",
+                "customer": "dsf",
+                "env": "dev"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "assign-permissions",
+            "resourceGroup": "[variables('rgName')]",
+            "dependsOn": [
+                "[variables('rgName')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2020-04-01-preview",
+                            "name": "[guid(parameters('stackName'))]",
+                            "properties": {
+                                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+                                "principalId": "[parameters('principalId')]",
+                                "scope": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('rgName'))]"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.Consumption/budgets",
+                            "apiVersion": "2019-10-01",
+                            "name": "[variables('budgetName')]",
+                            "properties": {
+                                "category": "Cost",
+                                "amount": "[parameters('budgetAmount')]",
+                                "timeGrain": "Monthly",
+                                "timePeriod": {
+                                    "startDate": "[parameters('budgetStartDate')]"
+                                },
+                                "notifications": {
+                                    "NotificationForExceededBudget1": {
+                                        "enabled": true,
+                                        "operator": "GreaterThan",
+                                        "threshold": 50,
+                                        "contactEmails": [
+                                            "[parameters('owner')]"
+                                        ]
+                                    },
+                                    "NotificationForExceededBudget2": {
+                                        "enabled": true,
+                                        "operator": "GreaterThan",
+                                        "threshold": 80,
+                                        "contactEmails": [
+                                            "[parameters('owner')]"
+                                        ]
+                                    },
+                                    "NotificationForExceededBudget3": {
+                                        "enabled": true,
+                                        "operator": "GreaterThan",
+                                        "threshold": 100,
+                                        "contactEmails": [
+                                            "[parameters('owner')]"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
